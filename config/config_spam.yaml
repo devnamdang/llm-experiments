@@ -1,0 +1,18 @@
+
+model:
+  foundation_model: 20260608022654
+
+training:
+  manual_seed: 123
+  batch_size: 8
+  num_workers: 0
+  epochs: 1
+  eval:
+    freq: 10
+    iter: 3
+
+
+# AdamW optimizer settings
+optimizer:
+  lr: 5.0e-5
+  weight_decay: 0.1

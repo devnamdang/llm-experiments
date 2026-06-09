@@ -17,10 +17,8 @@ import src.gpt as gpt
 import src.data as dt
 
 #%% Constants
-DATA_DIR = Path("/Volumes/ext-2-1000GB/code/python/gutenberg/data/raw")
-CONFIG_PATH = Path("config.yaml")
+CONFIG_PATH = Path("config/config_gpt2.yaml")
 OUTPUT_DIR = Path("output")
-MAX_FILES = 1
 
 #%% Config
 with open(CONFIG_PATH, 'r') as f:
@@ -28,18 +26,21 @@ with open(CONFIG_PATH, 'r') as f:
 training_config = config['training']
 model_config = config['model']
 optimizer_config = config['optimizer']
+data_config = config['data']
 
 #%% Load data
 
 def load_text_files():
-    files = [f for f in os.listdir(DATA_DIR) if isfile(join(DATA_DIR, f))]
+    data_dir = Path(data_config['training_dir'])
+    max_files = data_config['max_files']
+    files = [f for f in os.listdir(data_dir) if isfile(join(data_dir, f))]
     text_list = []
     for cnt, file_path in enumerate(files):
-        with open(DATA_DIR/file_path, "r", encoding="utf-8") as f:
+        with open(data_dir/file_path, "r", encoding="utf-8") as f:
             raw_text = f.read()
         text_list.append(raw_text)
         text_list.append('<|endoftext|>')
-        if cnt == MAX_FILES:
+        if cnt == max_files:
             break
     text = ' '.join(text_list)
     return text
@@ -98,7 +99,7 @@ def plot_losses(epochs_seen, tokens_seen, train_losses, val_losses):
 
 def save_output(model, optimizer, fig, losses_df):
     # Create output dir
-    output_run_dir = OUTPUT_DIR / datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    output_run_dir = OUTPUT_DIR / ("gpt2_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
     os.mkdir(output_run_dir)
 
     # Copy the config file
@@ -119,7 +120,7 @@ def save_output(model, optimizer, fig, losses_df):
     fig.savefig(output_run_dir / "losses.png")
 
 #%%
-def main():
+def run():
     train_loader, val_loader = create_data_loaders()
     torch.manual_seed(training_config['manual_seed'])
     model =gpt.GPTModel(model_config)
@@ -158,5 +159,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-
+    run()

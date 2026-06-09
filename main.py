@@ -1,5 +1,27 @@
+import sys
+from src import train_spam_model
+from src import train_gpt2
+
 def main():
-    print("Hello from llm-from-scratch!")
+
+    valid_commands = {
+        'help',
+        "train_gpt2",
+        "train_spam"
+    }
+    command = sys.argv[1]
+    assert command in valid_commands, f"Command '{command}' not found. Valid commands are: {valid_commands}"
+
+    if command == 'help':
+        print("Valid commands are: ")
+        for comm in valid_commands:
+            print(comm)
+
+    if command == "train_gpt2":
+        train_gpt2.run()
+    
+    if command == "train_spam":
+        train_spam_model.run()
 
 
 if __name__ == "__main__":

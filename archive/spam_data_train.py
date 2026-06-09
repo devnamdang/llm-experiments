@@ -302,6 +302,7 @@ train_losses, val_losses, train_accs, val_accs, examples_seen = train_classifier
     num_epochs=num_epochs, eval_freq=50,
     eval_iter=5
 )
+
 end_time = time.time()
 execution_time_minutes = (end_time - start_time) / 60
 print(f"Training completed in {execution_time_minutes:.2f} minutes.")
