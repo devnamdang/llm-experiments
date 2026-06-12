@@ -1,0 +1,22 @@
+
+# Select model in output
+model:
+  foundation_model: gpt2_20260611085746
+
+data: # Instruction data
+  path: data/instruction_data/instruction-data.json
+
+training:
+  train_test_fraction: [0.85, 0.1] # Portion for train, test and validation. We set only train and test portion. Validation is the rest.
+  manual_seed: 123
+  batch_size: 8
+  num_workers: 0
+  epochs: 5
+  eval:
+    freq: 10
+    iter: 3
+
+# AdamW optimizer settings
+optimizer:
+  lr: 5.0e-5
+  weight_decay: 0.1

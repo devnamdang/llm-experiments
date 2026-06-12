@@ -10,7 +10,7 @@ OUTPUT_DIR = Path("output")
 def load_gpt_model(model_name):
     # Import config
     model_path = OUTPUT_DIR / model_name
-    config_path = model_path / "config.yaml"
+    config_path = model_path / "config_gpt2.yaml"
     checkpoint_path = model_path / "model_and_optimizer.pth"
 
     with open(config_path, 'r') as f:

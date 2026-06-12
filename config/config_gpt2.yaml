@@ -3,15 +3,15 @@
 # Training data
 data:
   training_dir: /Volumes/ext-2-1000GB/code/python/gutenberg/data/raw
-  max_files: 5
+  max_files: 10 # Select up to the first number of files. Intended to select a few for testing.
 
 training:
   train_ratio: 0.9
   manual_seed: 123
-  batch_size: 8
+  batch_size: 2
   num_epochs: 5
   eval: # Evaluation settings during training
-    freq: 10
+    freq: 50
     iter: 5
     start_context: "Every effort moves you" # Check example to see how model finishes this
 
