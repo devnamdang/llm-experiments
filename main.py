@@ -3,6 +3,7 @@ from src import train_spam_model
 from src import train_gpt2
 from src import train_instruction_fine_tuning
 import src.llm1.train as llm1_train
+import src.llm2.train as train_llm2
 
 def main():
 
@@ -10,6 +11,7 @@ def main():
         'help',
         "train_gpt2",
         "train_llm1",
+        "train_llm2",
         "train_spam",
         "train_instruction"
     }
@@ -26,6 +28,9 @@ def main():
     
     if command == "train_llm1":
         llm1_train.run()
+    
+    if command == "train_llm2":
+        train_llm2.run()
     
     if command == "train_spam":
         train_spam_model.run()

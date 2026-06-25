@@ -3,7 +3,7 @@ import torch.nn as nn
 from typing import Optional, Tuple
 
 
-# GPT Model 2 modified with rotary embeddings and SiLu activation
+# Test with minicolumns and neo cortex
 
 def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
     """
@@ -204,13 +204,9 @@ class TransformerBlock(nn.Module):
         x += shortcut
         return x
 
-class Model(nn.Module):
+class MiniColumn(nn.Module):
     def __init__(self, cfg):
         super().__init__()
-        self.tok_emb = nn.Embedding(cfg['vocab_size'], cfg['emb_dim'])
-        self.pos_emb = nn.Embedding(cfg['context_length'], cfg['emb_dim'])
-        self.drop_emb = nn.Dropout(cfg["drop_rate"])
-        
         head_dim = cfg['emb_dim'] // cfg["n_heads"]
         freqs_cis = precompute_freqs_cis(head_dim, cfg['context_length'])
         self.trf_blocks = nn.Sequential(
@@ -222,16 +218,35 @@ class Model(nn.Module):
             cfg["emb_dim"], cfg["vocab_size"], bias=False
         )
     
-    def forward(self, in_idx):
-        batch_size, seq_len = in_idx.shape
-        tok_embeds = self.tok_emb(in_idx)
-        #pos_embeds = self.pos_emb(torch.arange(seq_len, device=in_idx.device))
-
-        x = tok_embeds
-        x = self.drop_emb(x)
+    def forward(self, x_in):
+        x, logits = x_in
         x = self.trf_blocks(x)
         x = self.final_norm(x)
-        logits = self.out_head(x)
+        if logits is not None:
+            logits = 0.5 * self.out_head(x) + 0.5 * logits
+        else:
+            logits = self.out_head(x)
+        return (x, logits)
+
+class Model(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.tok_emb = nn.Embedding(cfg['vocab_size'], cfg['emb_dim'])
+        self.pos_emb = nn.Embedding(cfg['context_length'], cfg['emb_dim'])
+        self.drop_emb = nn.Dropout(cfg["drop_rate"])
+        
+        head_dim = cfg['emb_dim'] // cfg["n_heads"]
+        #freqs_cis = precompute_freqs_cis(head_dim, cfg['context_length'])
+        #self.mini_column = MiniColumn(cfg)
+        self.cortex = nn.Sequential(
+            *[MiniColumn(cfg) for _ in range(cfg["n_columns"])]
+        )
+    
+    def forward(self, in_idx):
+        #batch_size, seq_len = in_idx.shape
+        x = self.tok_emb(in_idx)
+        x = self.drop_emb(x)
+        _, logits = self.cortex((x, None))
 
         return logits
 
