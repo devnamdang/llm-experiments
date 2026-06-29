@@ -1,9 +1,9 @@
 import sys
-from src import train_spam_model
-from src import train_gpt2
-from src import train_instruction_fine_tuning
-import src.llm1.train as llm1_train
-import src.llm2.train as train_llm2
+import src.spam as spam
+import src.instruction_fine_tune as finetune
+import src.gpt2 as gpt2
+import src.llm1 as llm1
+import src.llm2 as llm2
 
 def main():
 
@@ -24,19 +24,19 @@ def main():
             print(comm)
 
     if command == "train_gpt2":
-        train_gpt2.run()
+        gpt2.train.run()
     
     if command == "train_llm1":
-        llm1_train.run()
+        llm1.train.run()
     
     if command == "train_llm2":
-        train_llm2.run()
+        llm2.train.run()
     
     if command == "train_spam":
-        train_spam_model.run()
+        spam.train.run()
 
     if command == "train_instruction":
-        train_instruction_fine_tuning.run()
+        finetune.train.run()
 
 
 if __name__ == "__main__":

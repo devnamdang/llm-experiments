@@ -13,7 +13,7 @@ from pathlib import Path
 
 from torch.utils.data import Dataset, DataLoader
 from matplotlib.ticker import MaxNLocator
-import src.gpt as gpt
+import src.gpt2.model as mdl
 import src.data as dt
 
 #%% Constants
@@ -123,7 +123,7 @@ def save_output(model, optimizer, fig, losses_df):
 def run():
     train_loader, val_loader = create_data_loaders()
     torch.manual_seed(training_config['manual_seed'])
-    model =gpt.GPTModel(model_config)
+    model = mdl.Model(model_config)
     tokenizer = tiktoken.get_encoding(model_config['tokenizer'])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -135,7 +135,7 @@ def run():
 
     # Train model
     num_epochs = training_config['num_epochs']
-    train_losses, val_losses, tokens_seen = gpt.train_model_simple(
+    train_losses, val_losses, tokens_seen = mdl.train_model_simple(
         model, train_loader, val_loader, optimizer, device,
         num_epochs=num_epochs,
         eval_freq=training_config['eval']['freq'],

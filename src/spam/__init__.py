@@ -1,0 +1,1 @@
+from src.spam import model, train, load

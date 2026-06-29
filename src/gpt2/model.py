@@ -116,7 +116,7 @@ class TransformerBlock(nn.Module):
         x += shortcut
         return x
 
-class GPTModel(nn.Module):
+class Model(nn.Module):
     def __init__(self, cfg):
         super().__init__()
         self.tok_emb = nn.Embedding(cfg['vocab_size'], cfg['emb_dim'])

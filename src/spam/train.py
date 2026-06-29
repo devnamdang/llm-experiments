@@ -12,8 +12,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import yaml
 
-from src.load_model import load_gpt_model
-import src.spam_model as spmd
+from src.gpt2.load import load_model
+import src.spam.model as spmd
 
 CONFIG_PATH = Path("config/config_spam.yaml")
 OUTPUT_DIR = Path("output")
@@ -275,7 +275,7 @@ def run():
 
     # Load model
     model_name = str(model_config['foundation_model'])
-    model, _, gpt_config = load_gpt_model(model_name)
+    model, _, gpt_config = load_model(model_name)
     model = spmd.transform_to_classification_model(model)
 
     # Create tokenizer

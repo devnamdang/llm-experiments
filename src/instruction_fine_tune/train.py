@@ -11,9 +11,9 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from src.gpt import calc_loss_loader, train_model_simple
-from src.train_gpt2 import plot_losses
-from src.load_model import load_gpt_model
+from src.gpt2.model import calc_loss_loader, train_model_simple
+from src.gpt2.train import plot_losses
+from src.gpt2.load import load_model
 import src.utils as ut
 
 #%%
@@ -150,7 +150,7 @@ def load_data_loaders(data_config, training_config, tokenizer, customized_collat
 
 def run():
     training_config, model_config, optimizer_config, data_config = get_configs()
-    model, optimizer, gpt_config = load_gpt_model(model_config['foundation_model'])
+    model, optimizer, gpt_config = load_model(model_config['foundation_model'])
 
     device = get_device()
     customized_collate_fn = partial(

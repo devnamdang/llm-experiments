@@ -205,7 +205,7 @@ class TransformerBlock(nn.Module):
         return x
 
 class MiniColumn(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, final_norm, out_head):
         super().__init__()
         head_dim = cfg['emb_dim'] // cfg["n_heads"]
         freqs_cis = precompute_freqs_cis(head_dim, cfg['context_length'])
@@ -213,20 +213,20 @@ class MiniColumn(nn.Module):
             *[TransformerBlock(cfg, freqs_cis) for _ in range(cfg["n_layers"])]
         )
 
-        self.final_norm = LayerNorm(cfg["emb_dim"])
-        self.out_head = nn.Linear(
-            cfg["emb_dim"], cfg["vocab_size"], bias=False
-        )
+        self.final_norm = final_norm
+        self.out_head = out_head
     
     def forward(self, x_in):
         x, logits = x_in
         x = self.trf_blocks(x)
         x = self.final_norm(x)
+        new_logits = torch.unsqueeze(self.out_head(x), 0)
         if logits is not None:
-            logits = 0.5 * self.out_head(x) + 0.5 * logits
+            logits = torch.cat((logits, new_logits), dim=0)
         else:
-            logits = self.out_head(x)
+            logits = new_logits
         return (x, logits)
+
 
 class Model(nn.Module):
     def __init__(self, cfg):
@@ -235,11 +235,14 @@ class Model(nn.Module):
         self.pos_emb = nn.Embedding(cfg['context_length'], cfg['emb_dim'])
         self.drop_emb = nn.Dropout(cfg["drop_rate"])
         
-        head_dim = cfg['emb_dim'] // cfg["n_heads"]
-        #freqs_cis = precompute_freqs_cis(head_dim, cfg['context_length'])
-        #self.mini_column = MiniColumn(cfg)
+        #head_dim = cfg['emb_dim'] // cfg["n_heads"]
+        self.final_norm = LayerNorm(cfg["emb_dim"])
+        self.out_head = nn.Linear(
+            cfg["emb_dim"], cfg["vocab_size"], bias=False
+        )
+
         self.cortex = nn.Sequential(
-            *[MiniColumn(cfg) for _ in range(cfg["n_columns"])]
+            *[MiniColumn(cfg, self.final_norm, self.out_head ) for _ in range(cfg["n_columns"])]
         )
     
     def forward(self, in_idx):
@@ -247,8 +250,9 @@ class Model(nn.Module):
         x = self.tok_emb(in_idx)
         x = self.drop_emb(x)
         _, logits = self.cortex((x, None))
+        avg_logits = torch.sum(logits, 0) / logits.shape[0]
 
-        return logits
+        return avg_logits
 
 # Evaluate model
 def calc_loss_batch(input_batch, target_batch, model, device):

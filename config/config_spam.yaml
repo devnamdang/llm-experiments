@@ -1,6 +1,6 @@
 
 model:
-  foundation_model: 20260608022654
+  foundation_model: gpt2_20260611085746
 
 training:
   manual_seed: 123

@@ -86,6 +86,12 @@ def apply_rotary_emb(
     xk_out = torch.view_as_real(xk_ * freqs_cis).flatten(3)
     return xq_out.type_as(xq), xk_out.type_as(xk)
 
+def mat_cosine_similarity(x, y, eps=1e-8):
+    max_eps = lambda x: torch.where(x<eps, eps, x)
+    x_norm = max_eps(x.norm(dim=-1, keepdim=True))
+    y_norm = max_eps(y.norm(dim=-1, keepdim=True))
+    similarity = (x @ y.transpose(-2, -1)) / (x_norm * y_norm)
+    return similarity
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_in, d_out, context_length, dropout, num_heads, qkv_bias=False):
@@ -106,6 +112,7 @@ class MultiHeadAttention(nn.Module):
             'mask',
             torch.triu(torch.ones(context_length, context_length), diagonal=1)
         )
+
     def forward(self, x, freqs_cis):
         b, num_tokens, d_in = x.shape
         keys = self.W_key(x)
@@ -123,7 +130,7 @@ class MultiHeadAttention(nn.Module):
         queries = queries.transpose(1,2)
         values = values.transpose(1,2)
 
-        attn_scores = queries @ keys.transpose(2,3)
+        attn_scores = (queries @ keys.transpose(2,3))
         mask_bool = self.mask.bool()[:num_tokens, :num_tokens]
         attn_scores.masked_fill_(mask_bool, -torch.inf)
         d_k = keys.shape[-1]
