@@ -11,3 +11,4 @@ wheels/
 
 # Output
 output/*
+data/mnist/*
