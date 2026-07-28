@@ -85,7 +85,7 @@ class Decoder(nn.Module):
         return x
 
 class CapsNet(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg=config):
         super().__init__()
         # Set attributes
         self.primary_caps_dim = cfg["primary_caps_dim"] 

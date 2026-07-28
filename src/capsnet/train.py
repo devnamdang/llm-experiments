@@ -30,16 +30,9 @@ def get_image(data, idx):
     img, _ = data[idx]
     return img
 
-
 def calc_batch_reconstruction_loss(input_batch, output_batch):
-    batch_size = input_batch.shape[0]
     loss_fn = nn.MSELoss()
-    total_loss = 0
-    #output_batch = model(input_batch)
-    for i in range(batch_size):
-        total_loss += loss_fn(input_batch[i].flatten(), output_batch[i])
-    total_loss = total_loss / batch_size
-    return total_loss
+    return loss_fn(input_batch.flatten(), output_batch.flatten())
 
 def get_digits(v):
     predicted_labels = torch.argmax(v, dim=-1) 
@@ -112,22 +105,21 @@ def eval_model(model, dataloader, n_batches):
 def show_example_image(model, data):
     model.eval()
     image, _ = data
+    image = image.unsqueeze(dim=0)
     with torch.no_grad():
         _, output_image = model(image)
     model.train()
-    examples = torch.cat((image, output_image.detach()), dim=0)
+    examples = torch.cat((image.movedim(1,-1), output_image.detach().movedim(1,-1)), dim=0)
     show_image(examples)
 
 
-def train_model(model, optimizer, train_loader ,epochs, eval_interval=50, eval_batches=20):
+def train_model(model, optimizer, train_loader, val_loader, epochs, eval_interval=50, eval_batches=20):
     start_time = datetime.now()
     model.train()
 
     batch_count = 0
-    results = []
-
-    # Get sample image
-    train = next(iter(train_loader))
+    train_results = []
+    val_results = []
 
     for epoch in range(epochs):
         for i_batch, batch in enumerate(train_loader):
@@ -138,24 +130,39 @@ def train_model(model, optimizer, train_loader ,epochs, eval_interval=50, eval_b
             loss.backward()
             optimizer.step()
             batch_count += 1
-            if i_batch == 0 | (batch_count % eval_interval == 0) | (i_batch==len(train_loader)-1): 
+
+            # Track performance during training
+            if (batch_count == 1) | (batch_count % eval_interval == 0) | (i_batch==len(train_loader)-1): 
                 # Eval per interval, first and last batch
                 accuracy, reconstruction_loss, margin_loss, combined_loss = eval_model(model, train_loader, eval_batches)
-                print(f"Epoch: {epoch:03d}, batch count: {batch_count:06d}, accuracy: {accuracy:.4f}, reconstruction loss: {reconstruction_loss:.4f}, margin loss: {margin_loss:.4f}, combined loss: {combined_loss:.4f}")
-                results.append(
+                print(f"Train set. epoch: {epoch:03d}, batch count: {batch_count:06d}, accuracy: {accuracy:.4f}, reconstruction loss: {reconstruction_loss:.4f}, margin loss: {margin_loss:.4f}, combined loss: {combined_loss:.4f}")
+                train_results.append(
                     {
                         "epoch": epoch,
                         "batch_count": batch_count,
-                        "accuracy": accuracy,
-                        "reconstruction_loss": reconstruction_loss,
-                        "margin_loss": margin_loss,
-                        "combined_loss": combined_loss
+                        "accuracy": accuracy.item(),
+                        "reconstruction_loss": reconstruction_loss.item(),
+                        "margin_loss": margin_loss.item(),
+                        "combined_loss": combined_loss.item()
                     }
                 )
-                show_example_image(model, train[0])
-                show_example_image(model, train[1])
 
+                accuracy, reconstruction_loss, margin_loss, combined_loss = eval_model(model, val_loader, eval_batches)
+                print(f"Val set. epoch: {epoch:03d}, batch count: {batch_count:06d}, accuracy: {accuracy:.4f}, reconstruction loss: {reconstruction_loss:.4f}, margin loss: {margin_loss:.4f}, combined loss: {combined_loss:.4f}")
+                val_results.append(
+                    {
+                        "epoch": epoch,
+                        "batch_count": batch_count,
+                        "accuracy": accuracy.item(),
+                        "reconstruction_loss": reconstruction_loss.item(),
+                        "margin_loss": margin_loss.item(),
+                        "combined_loss": combined_loss.item()
+                    }
+                )
+
+                show_example_image(model, val_loader.dataset[0])
+                show_example_image(model, val_loader.dataset[1])
 
     end_time = datetime.now()
     print('Training duration: {}'.format(end_time - start_time))
-    return model, results
+    return train_results, val_results
