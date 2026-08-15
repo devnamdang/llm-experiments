@@ -1,0 +1,1 @@
+from src.capsnet2 import model, train

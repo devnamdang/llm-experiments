@@ -82,6 +82,7 @@ class Decoder(nn.Module):
         x = self.silu(x)
         x = self.fc3(x)
         x = self.sigmoid(x)
+        x = x.reshape(x.shape[0], 1, 28, 28) # (batch_size, 28*28) -> (batch_size, 1, 28, 28)
         return x
 
 class CapsNet(nn.Module):
@@ -127,9 +128,8 @@ class CapsNet(nn.Module):
         v = route(u, self.route_iter) # (batch_size, n_digits, 1, digit_dim)
 
         # Output
-        v_norm = v.norm(dim=-1, p=2, keepdim=False).squeeze() # (batch_size, n_digits, 1, digit_dim) -> (batch_size, n_digits)
+        v_norm = v.norm(dim=-1, p=2, keepdim=False).squeeze(dim=-1) # (batch_size, n_digits, 1, digit_dim) -> (batch_size, n_digits)
         y = self.decoder(v.flatten(start_dim=1)) # (batch_size, n_digits*digit_dim) -> (batch_size, 28*28)
-        y = y.reshape(batch_size, 1, 28, 28) # (batch_size, 28*28) -> (batch_size, 1, 28, 28)
         return v_norm, y
 
 
